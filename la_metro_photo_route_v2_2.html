@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LA Metro Photo Route</title>
+  <style>
+    :root {
+      --cream: #fbf5ed;
+      --ink: #33241f;
+      --muted: #87776c;
+      --line: #eadfd4;
+      --pink: #eb8e98;
+      --blue: #6aa7d9;
+      --yellow: #e7b446;
+      --green: #83b46d;
+      --teal: #61b6c5;
+      --purple: #a88ac4;
+      --shadow: 0 18px 45px rgba(92,70,58,.10);
+      --soft-shadow: 0 8px 22px rgba(92,70,58,.07);
+      --serif: Georgia, "Times New Roman", serif;
+      --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; }
+    button { font: inherit; }
+
+    body {
+      min-height: 100vh;
+      font-family: var(--sans);
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 12% 8%, rgba(255,255,255,.9), transparent 26%),
+        radial-gradient(circle at 90% 10%, rgba(255,235,237,.9), transparent 28%),
+        radial-gradient(circle at 76% 86%, rgba(230,248,255,.9), transparent 28%),
+        var(--cream);
+    }
+
+    /* ── Browser chrome ── */
+    .browser {
+      width: min(1420px, calc(100% - 28px));
+      margin: 12px auto 28px;
+      border: 1px solid #e2d4c7;
+      border-radius: 34px;
+      background: linear-gradient(180deg, #fffdf9, #fbf3ea);
+      box-shadow: 0 26px 70px rgba(88,66,55,.13);
+      overflow: hidden;
+    }
+
+    .browser-bar {
+      height: 56px;
+      display: grid;
+      grid-template-columns: 200px 1fr 180px;
+      align-items: center;
+      padding: 0 22px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255,253,248,.72);
+    }
+
+    .bar-left, .bar-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: #9a897d;
+      font-size: 20px;
+    }
+    .bar-right { justify-content: flex-end; }
+
+    .traffic { display: flex; gap: 9px; margin-right: 14px; }
+    .traffic span {
+      width: 14px; height: 14px; border-radius: 50%;
+      box-shadow: inset 0 1px 1px rgba(255,255,255,.8), 0 1px 2px rgba(0,0,0,.08);
+    }
+    .t-red { background: #f86f62; }
+    .t-yel { background: #f3be49; }
+    .t-grn { background: #80c55c; }
+
+    .url-bar {
+      margin: 0 auto;
+      height: 36px;
+      width: min(480px, 100%);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: rgba(255,255,255,.74);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      color: #7d7067;
+      font-size: 14px;
+    }
+    .url-bar svg { width: 14px; height: 14px; color: #9a897d; }
+
+    /* ── App grid ── */
+    .app-grid {
+      display: grid;
+      grid-template-columns: 80px 1fr;
+      min-height: 880px;
+    }
+
+    .sidebar {
+      padding: 20px 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .logo {
+      width: 60px; height: 60px;
+      border-radius: 50%;
+      display: grid; place-items: center;
+      background: linear-gradient(180deg, #f4b8be, var(--pink));
+      color: white;
+      font-family: var(--serif);
+      font-size: 22px;
+      font-weight: 700;
+      box-shadow: 0 8px 16px rgba(235,142,152,.22);
+    }
+
+    .sidebar-doodle { margin-top: auto; width: 80px; opacity: .88; }
+
+    /* ── Content ── */
+    .content {
+      padding: 22px 24px 24px 6px;
+      min-width: 0;
+    }
+
+    .top-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: flex-start;
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      font-family: var(--serif);
+      font-size: clamp(32px, 3.5vw, 50px);
+      font-weight: 500;
+      letter-spacing: -.03em;
+      line-height: 1;
+    }
+
+    .route-meta {
+      margin-top: 8px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      color: #51453e;
+      font-weight: 650;
+      font-size: 14px;
+    }
+    .route-meta .dot { color: #b7a89d; }
+
+    .actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; padding-top: 6px; }
+
+    .pill-btn {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      height: 40px;
+      padding: 0 16px;
+      background: rgba(255,255,255,.72);
+      color: #3d312b;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      font-weight: 700;
+      font-size: 14px;
+      box-shadow: var(--soft-shadow);
+      cursor: pointer;
+      transition: .18s ease;
+    }
+    .pill-btn:hover { transform: translateY(-1px); background: #fff; }
+    .pill-btn.save { background: #fff0f2; border-color: #efc4ca; color: #7b4a50; }
+    .pill-btn svg { width: 16px; height: 16px; }
+
+    /* ── Dashboard ── */
+    .dashboard {
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .map-card {
+      min-height: 510px;
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: linear-gradient(180deg, #fffdf9, #fbf7f1);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      padding: 10px;
+    }
+
+    .map-inner {
+      position: relative;
+      min-height: 490px;
+      border: 1px solid #efe3d8;
+      border-radius: 20px;
+      background: #fbf6ef;
+      overflow: hidden;
+    }
+
+    .map-bg, .route-svg {
+      position: absolute;
+      inset: 0;
+      width: 100%; height: 100%;
+      display: block;
+    }
+    .route-svg { z-index: 2; pointer-events: none; }
+
+    .compass {
+      position: absolute;
+      top: 14px; left: 14px;
+      z-index: 5;
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      border: 1px solid #dacabc;
+      background: rgba(255,255,255,.75);
+      display: grid; place-items: center;
+      color: #78665c;
+      font-weight: 900;
+      font-size: 11px;
+      line-height: 1;
+      box-shadow: var(--soft-shadow);
+    }
+
+    .zoom {
+      position: absolute;
+      left: 14px; bottom: 14px;
+      z-index: 5;
+      border: 1px solid #dacabc;
+      border-radius: 12px;
+      overflow: hidden;
+      background: rgba(255,255,255,.82);
+      box-shadow: var(--soft-shadow);
+    }
+    .zoom button {
+      display: block;
+      border: 0;
+      width: 36px; height: 34px;
+      background: transparent;
+      color: #837165;
+      font-size: 22px;
+      cursor: pointer;
+    }
+    .zoom button + button { border-top: 1px solid var(--line); }
+
+    .soft-label {
+      position: absolute;
+      color: #9fb291;
+      font-size: 13px;
+      letter-spacing: .16em;
+      font-weight: 900;
+      transform: rotate(-4deg);
+      z-index: 1;
+    }
+
+    /* ── Map stops ── */
+    .stop {
+      position: absolute;
+      z-index: 6;
+      transform: translate(-50%, -50%);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: .18s ease;
+      user-select: none;
+      border: 0;
+      background: transparent;
+      padding: 0;
+      text-align: left;
+    }
+    .stop:hover { transform: translate(-50%, -50%) scale(1.04); }
+    .stop.active .num { transform: scale(1.15); box-shadow: 0 10px 20px rgba(92,70,58,.15); }
+
+    .num {
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      color: white;
+      display: grid; place-items: center;
+      font-weight: 900;
+      font-size: 18px;
+      border: 3px solid rgba(255,255,255,.9);
+      box-shadow: 0 6px 12px rgba(92,70,58,.10);
+      transition: .18s ease;
+      flex-shrink: 0;
+    }
+
+    .stop-icon {
+      width: 28px; height: 28px;
+      flex-shrink: 0;
+      display: grid; place-items: center;
+    }
+    .stop-icon svg { width: 24px; height: 24px; filter: drop-shadow(0 4px 6px rgba(92,70,58,.08)); }
+
+    .stop-copy {
+      min-width: 110px;
+      font-family: var(--serif);
+      color: #342620;
+      font-size: 18px;
+      line-height: 1.1;
+      text-shadow: 0 1px 0 rgba(255,255,255,.75);
+    }
+    .stop-time {
+      margin-top: 4px;
+      display: block;
+      font-family: var(--sans);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    /* ── Detail card ── */
+    .detail-card {
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: linear-gradient(180deg, #fffdf9, #fbf7f1);
+      box-shadow: var(--shadow);
+      padding: 16px;
+      min-height: 510px;
+      position: relative;
+    }
+
+    .detail-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      gap: 8px;
+    }
+
+    .detail-num {
+      width: 38px; height: 38px;
+      border-radius: 50%;
+      display: grid; place-items: center;
+      color: white;
+      font-size: 20px;
+      font-weight: 900;
+      border: 3px solid rgba(255,255,255,.9);
+      box-shadow: var(--soft-shadow);
+    }
+
+    .close { color: #5f5149; font-size: 26px; line-height: 1; cursor: pointer; }
+
+    .detail-icon-wrap {
+      height: 80px;
+      display: grid; place-items: center;
+      margin: 4px 0;
+    }
+    .detail-icon-wrap svg { width: 48px; height: 48px; }
+
+    .detail-title {
+      font-family: var(--serif);
+      font-size: 24px;
+      line-height: 1.1;
+      font-weight: 500;
+    }
+
+    .detail-time {
+      margin-top: 6px;
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      font-size: 13px;
+      font-weight: 800;
+    }
+    .detail-time svg { width: 14px; height: 14px; }
+
+    .detail-desc {
+      margin: 10px 0 12px;
+      color: #5b4e46;
+      line-height: 1.55;
+      font-size: 14px;
+    }
+
+    .dash { border-top: 2px dashed #efc4ca; margin: 8px 0 12px; }
+
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 900;
+      color: #392b25;
+      margin-bottom: 8px;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+    .section-head svg { width: 16px; height: 16px; color: var(--muted); }
+
+    .checklist { display: grid; gap: 7px; }
+    .check {
+      display: flex;
+      gap: 8px;
+      color: #574a42;
+      font-size: 13px;
+      align-items: start;
+      cursor: pointer;
+      user-select: none;
+      transition: opacity .15s ease;
+    }
+    .check:hover { opacity: .8; }
+    .check.done { opacity: .5; }
+    .check.done .check-label { text-decoration: line-through; }
+    .box {
+      width: 15px; height: 15px;
+      border: 2px solid #d7c6b8;
+      border-radius: 4px;
+      background: #fffefa;
+      flex-shrink: 0;
+      margin-top: 1px;
+      transition: background .15s, border-color .15s;
+      position: relative;
+    }
+    .check.done .box {
+      background: var(--green);
+      border-color: var(--green);
+    }
+    .check.done .box::after {
+      content: '';
+      position: absolute;
+      left: 3px; top: 0;
+      width: 5px; height: 8px;
+      border: solid #fff;
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+    }
+    .check-text { display: flex; flex-direction: column; gap: 1px; }
+    .check-label { line-height: 1.3; }
+    .check-hint { font-size: 11px; color: var(--muted); line-height: 1.3; font-weight: 400; }
+
+    .info-box {
+      border: 1px solid rgba(0,0,0,0.06);
+      background: #fff;
+      border-radius: 14px;
+      padding: 12px;
+    }
+    .info-box h3 {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+
+    .transit-section { margin-top: 4px; }
+    .transit-step {
+      display: flex;
+      gap: 8px;
+      align-items: start;
+      padding: 6px 0;
+      font-size: 13px;
+      color: #574a42;
+      line-height: 1.4;
+    }
+    .transit-step + .transit-step { border-top: 1px solid rgba(0,0,0,0.04); }
+    .transit-mode {
+      flex-shrink: 0;
+      width: 24px; height: 24px;
+      border-radius: 6px;
+      display: grid; place-items: center;
+    }
+    .transit-mode svg { width: 14px; height: 14px; }
+    .transit-mode.m-metro { background: rgba(106,167,217,0.15); color: var(--blue); }
+    .transit-mode.m-walk  { background: rgba(231,180,70,0.15); color: var(--yellow); }
+    .transit-mode.m-tip   { background: rgba(235,142,152,0.15); color: var(--pink); }
+
+    .note-box {
+      margin-top: 12px;
+      border: 1px solid #f0cfd4;
+      background: #fff5f6;
+      border-radius: 16px;
+      padding: 12px;
+      position: relative;
+    }
+    .note-box strong { display: block; font-size: 13px; margin-bottom: 6px; }
+    .note-box p { color: #51453e; line-height: 1.48; font-size: 14px; }
+
+    /* ── Bottom area ── */
+    .bottom-area {
+      display: grid;
+      grid-template-columns: 1fr 210px;
+      gap: 16px;
+      align-items: start;
+      margin-top: 22px;
+    }
+
+    .itinerary-title {
+      margin: 0 0 12px 6px;
+      font-family: var(--serif);
+      font-size: 21px;
+      font-weight: 500;
+    }
+
+    .timeline-row {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(118px, 1fr));
+      gap: 10px;
+    }
+
+    .card-stop {
+      min-height: 140px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.62);
+      border-radius: 20px;
+      padding: 10px;
+      display: grid;
+      align-content: space-between;
+      cursor: pointer;
+      transition: .18s ease;
+      box-shadow: var(--soft-shadow);
+      text-align: left;
+      color: inherit;
+    }
+    .card-stop:hover { transform: translateY(-2px); background: #fff; }
+    .card-stop.active { border-color: #edc7cc; background: #fff6f7; }
+
+    .mini-num {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      display: grid; place-items: center;
+      color: white;
+      font-weight: 900;
+      font-size: 14px;
+      border: 2px solid rgba(255,255,255,.9);
+    }
+
+    .mini-icon { text-align: center; line-height: 1; }
+    .mini-icon svg { width: 28px; height: 28px; }
+    .mini-title { font-family: var(--serif); font-size: 16px; line-height: 1.15; min-height: 36px; }
+    .mini-time { font-size: 12px; font-weight: 800; }
+
+    .total-pill {
+      width: max-content;
+      margin: 14px auto 0;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255,255,255,.72);
+      padding: 9px 16px;
+      display: flex;
+      gap: 7px;
+      align-items: center;
+      color: #3e3029;
+      font-weight: 700;
+      font-size: 14px;
+      box-shadow: var(--soft-shadow);
+    }
+    .total-pill svg { width: 14px; height: 14px; color: var(--muted); }
+
+    .legend-card {
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: rgba(255,255,255,.62);
+      box-shadow: var(--soft-shadow);
+      padding: 14px;
+    }
+    .legend-card h3 {
+      margin: 0 0 10px;
+      font-family: var(--serif);
+      font-weight: 500;
+      font-size: 18px;
+    }
+    .legend-list { display: grid; gap: 8px; }
+    .legend-item { display: flex; align-items: center; gap: 8px; color: #5c5048; font-size: 12px; font-weight: 700; }
+    .swatch { width: 32px; height: 4px; border-radius: 999px; display: inline-block; }
+    .swatch.dashed { height: 0; border-top: 3px dashed var(--purple); }
+    .legend-item svg { width: 14px; height: 14px; }
+
+    /* ── Backup notes ── */
+    .backup {
+      margin-top: 18px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+    .backup-note {
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.50);
+      border-radius: 16px;
+      padding: 12px;
+      color: #655850;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+    .backup-note strong { display: block; color: var(--ink); margin-bottom: 4px; font-size: 13px; }
+
+    /* ── Responsive ── */
+    @media (max-width: 1180px) {
+      .dashboard { grid-template-columns: 1fr; }
+      .detail-card { min-height: auto; }
+      .bottom-area { grid-template-columns: 1fr; }
+      .legend-card { max-width: 280px; }
+    }
+    @media (max-width: 900px) {
+      .browser-bar { grid-template-columns: 1fr; height: auto; gap: 8px; padding: 12px; }
+      .bar-left, .bar-right { justify-content: center; }
+      .app-grid { grid-template-columns: 1fr; }
+      .sidebar { flex-direction: row; overflow-x: auto; padding: 12px; }
+      .sidebar-doodle { display: none; }
+      .content { padding: 14px; }
+      .top-row { flex-direction: column; }
+      .timeline-row { grid-template-columns: repeat(3, minmax(118px, 1fr)); }
+      .backup { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 560px) {
+      .browser { width: min(100% - 10px, 1420px); border-radius: 22px; }
+      h1 { font-size: 30px; }
+      .map-inner { min-height: 400px; }
+      .timeline-row { grid-template-columns: 1fr 1fr; }
+      .stop-copy { font-size: 14px; min-width: 80px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="browser">
+    <div class="browser-bar">
+      <div class="bar-left">
+        <div class="traffic"><span class="t-red"></span><span class="t-yel"></span><span class="t-grn"></span></div>
+        <span>‹</span><span>›</span>
+      </div>
+      <div class="url-bar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>
+        <span>lametroroute.app/itinerary</span>
+      </div>
+      <div class="bar-right"><span>☆</span><span>＋</span><span>▢</span></div>
+    </div>
+
+    <div class="app-grid">
+      <aside class="sidebar">
+        <div class="logo">LA</div>
+        <svg class="sidebar-doodle" viewBox="0 0 120 140" fill="none" aria-hidden="true">
+          <path d="M8 117 C22 102, 38 98, 54 108 C68 116, 84 118, 112 102" stroke="#d1c1b2" stroke-width="2" stroke-linecap="round" stroke-dasharray="4 5"/>
+          <circle cx="103" cy="103" r="6" stroke="#ec8f98" stroke-width="2.2"/><circle cx="103" cy="103" r="2.3" fill="#ec8f98"/>
+          <path d="M24 97 V69 M43 99 V76" stroke="#9bb58b" stroke-width="2.3" stroke-linecap="round"/>
+          <path d="M24 69 C17 72,15 76,18 82 M24 69 C31 72,33 76,30 82 M43 76 C37 79,36 83,39 88 M43 76 C49 79,50 83,47 88" stroke="#9bb58b" stroke-width="2.3" stroke-linecap="round"/>
+          <path d="M55 100 H96 M56 100 V90 H64 V100 M67 100 V82 H76 V100 M79 100 V87 H89 V100" stroke="#9bb58b" stroke-width="2.3"/>
+          <circle cx="17" cy="47" r="8" stroke="#dfc48a" stroke-width="2.3"/>
+          <path d="M16 33 V24 M16 70 V61 M30 47 H39 M6 57 L-1 64 M26 57 L33 64 M6 37 L-1 30" stroke="#dfc48a" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </aside>
+
+      <main class="content">
+        <div class="top-row">
+          <div>
+            <h1>LA Metro Photo Route</h1>
+            <div class="route-meta"><span>2:30 PM Start</span><span class="dot">·</span><span>~5 hours</span><span class="dot">·</span><span>6 stops</span></div>
+          </div>
+          <div class="actions">
+            <button class="pill-btn save" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 000-7.78z"/></svg> Save</button>
+            <button class="pill-btn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Share</button>
+          </div>
+        </div>
+
+        <section class="dashboard">
+          <div class="map-card">
+            <div class="map-inner">
+              <svg class="map-bg" viewBox="0 0 1000 560" preserveAspectRatio="none" aria-hidden="true">
+                <rect width="1000" height="560" fill="#fbf6ef"/>
+                <g stroke="#eee4da" stroke-width="2" fill="none" opacity=".95">
+                  <path d="M15 102 C140 83,190 70,260 76 C332 82,380 65,430 35"/>
+                  <path d="M0 200 C80 188,145 172,220 175 C270 177,330 158,430 132 C550 101,618 110,745 82"/>
+                  <path d="M0 308 C78 280,160 268,230 270 C324 272,404 230,510 220 C628 209,725 234,840 214 C908 202,959 186,1000 176"/>
+                  <path d="M0 404 C70 375,138 355,215 345 C308 333,355 309,440 300 C580 285,705 321,844 300 C907 291,956 275,1000 263"/>
+                  <path d="M0 500 C78 462,132 438,238 442 C340 446,425 416,530 407 C640 397,726 428,854 432 C928 435,968 424,1000 413"/>
+                  <path d="M115 0 C126 70,138 163,155 560"/><path d="M220 0 C226 100,250 180,250 560"/><path d="M338 0 C334 136,350 242,366 560"/><path d="M462 0 C460 116,470 246,495 560"/><path d="M592 0 C588 122,608 208,632 560"/><path d="M720 0 C720 116,744 224,764 560"/><path d="M846 0 C838 105,852 214,874 560"/>
+                </g>
+                <g fill="#e8efe0" opacity=".85"><path d="M90 65 C105 45,140 43,160 59 C155 90,132 108,101 100 C92 88,86 80,90 65Z"/><path d="M752 44 C776 23,822 21,848 45 C844 81,814 90,780 90 C766 72,756 63,752 44Z"/><path d="M822 188 C847 166,892 165,914 190 C900 218,874 232,842 224 C834 214,824 203,822 188Z"/><path d="M590 390 C615 364,645 368,669 392 C653 420,616 429,591 416 C585 405,584 398,590 390Z"/></g>
+              </svg>
+
+              <svg class="route-svg" viewBox="0 0 1000 560" preserveAspectRatio="none" aria-hidden="true">
+                <path d="M130 410 C180 405 210 390 250 375 C290 360 265 260 290 235 C345 210 360 205 402 175 C445 115 505 108 530 122 C580 138 600 164 650 180 C710 195 760 210 760 315 C710 365 698 422 560 410" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="14" stroke-linecap="round"/>
+                <path d="M130 410 C180 405 210 390 250 375 C290 360 265 260 290 235" fill="none" stroke="var(--blue)" stroke-width="7" stroke-linecap="round"/>
+                <path d="M290 235 C345 210 360 205 402 175" fill="none" stroke="var(--pink)" stroke-width="7" stroke-linecap="round"/>
+                <path d="M402 175 C445 115 505 108 530 122" fill="none" stroke="var(--yellow)" stroke-width="7" stroke-linecap="round"/>
+                <path d="M530 122 C580 138 600 164 650 180" fill="none" stroke="var(--green)" stroke-width="7" stroke-linecap="round"/>
+                <path d="M650 180 C710 195 760 210 760 315" fill="none" stroke="var(--teal)" stroke-width="7" stroke-linecap="round"/>
+                <path d="M760 315 C710 365 698 422 560 410" fill="none" stroke="var(--purple)" stroke-width="7" stroke-linecap="round" stroke-dasharray="10 7"/>
+              </svg>
+
+              <div class="soft-label" style="left:430px;top:38px;">HOLLYWOOD</div>
+              <div class="compass">N</div>
+              <div class="zoom"><button type="button">+</button><button type="button">−</button></div>
+              <div id="mapStops"></div>
+            </div>
+          </div>
+
+          <aside class="detail-card">
+            <div class="detail-head">
+              <div class="detail-num" id="detailNum">1</div>
+              <div class="close">×</div>
+            </div>
+            <div class="detail-icon-wrap" id="detailIcon"></div>
+            <h2 class="detail-title" id="detailTitle"></h2>
+            <div class="detail-time" id="detailTime"></div>
+            <p class="detail-desc" id="detailDesc"></p>
+            <div class="info-box" style="margin-top:10px">
+              <h3 style="color:var(--blue)">Getting There</h3>
+              <div class="transit-section" id="transitInfo"></div>
+            </div>
+            <div class="dash"></div>
+            <div class="section-head">
+              <span>Photo Checklist</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            </div>
+            <div class="checklist" id="checklist"></div>
+            <div class="note-box"><strong>Notes</strong><p id="detailNote"></p></div>
+          </aside>
+        </section>
+
+        <section class="bottom-area">
+          <div>
+            <h2 class="itinerary-title">Your Itinerary</h2>
+            <div class="timeline-row" id="timelineRow"></div>
+            <div class="total-pill">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              <span>Total ~5 hours</span>
+            </div>
+          </div>
+          <aside class="legend-card">
+            <h3>Legend</h3>
+            <div class="legend-list">
+              <div class="legend-item"><span class="swatch" style="background:var(--blue)"></span>Metro / transfer</div>
+              <div class="legend-item"><span class="swatch" style="background:var(--pink)"></span>Photo stop</div>
+              <div class="legend-item"><span class="swatch" style="background:var(--green)"></span>Food stop</div>
+              <div class="legend-item"><span class="swatch dashed"></span>Return route</div>
+              <div class="legend-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="4" y="3" width="16" height="16" rx="3"/><line x1="4" y1="11" x2="20" y2="11"/><line x1="9" y1="19" x2="6" y2="22"/><line x1="15" y1="19" x2="18" y2="22"/></svg>
+                Metro Station
+              </div>
+            </div>
+          </aside>
+        </section>
+
+        <section class="backup">
+          <div class="backup-note"><strong>Darker Urban Light photos</strong>Stay at LACMA an extra 30–60 min. Route becomes ~6 hours, but the photos may look better.</div>
+          <div class="backup-note"><strong>If you get tired</strong>Keep Disney Hall, In-N-Out, and LACMA. Cut Hollywood down to 20–30 min.</div>
+          <div class="backup-note"><strong>Uncomfortable after dark</strong>Use rideshare from In-N-Out or from LACMA back to Pico. Don't force the transit route.</div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    "use strict";
+
+    /* ── SVG icon strings (replace all emojis) ── */
+    const IC = {
+      train:  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="3" width="16" height="16" rx="3"/><line x1="4" y1="11" x2="20" y2="11"/><line x1="9" y1="19" x2="6" y2="22"/><line x1="15" y1="19" x2="18" y2="22"/><circle cx="9" cy="15" r="1" fill="currentColor" stroke="none"/><circle cx="15" cy="15" r="1" fill="currentColor" stroke="none"/></svg>`,
+      building: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 21h18M5 21V7l7-4 7 4v14"/><line x1="9" y1="21" x2="9" y2="17"/><line x1="15" y1="21" x2="15" y2="17"/><rect x="9" y="9" width="2" height="2"/><rect x="13" y="9" width="2" height="2"/><rect x="9" y="13" width="2" height="2"/><rect x="13" y="13" width="2" height="2"/></svg>`,
+      star: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
+      burger: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 11h18M3 15h18"/><path d="M5 11a7 7 0 0114 0"/><path d="M4 15l1 4h14l1-4"/></svg>`,
+      lamp: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="2" x2="12" y2="6"/><circle cx="12" cy="10" r="4"/><line x1="12" y1="14" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/><line x1="4" y1="4" x2="7" y2="7"/><line x1="20" y1="4" x2="17" y2="7"/></svg>`,
+      clock: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
+      metro: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="4" y="3" width="16" height="16" rx="3"/><line x1="4" y1="11" x2="20" y2="11"/><line x1="9" y1="19" x2="6" y2="22"/><line x1="15" y1="19" x2="18" y2="22"/></svg>`,
+      walk: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="13" cy="4" r="2"/><path d="M17 22l-3-6-2.5 2L9 22"/><path d="M7 12l3-3 2 3 4-1 1 3"/></svg>`,
+      tip: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>`
+    };
+
+    const stops = [
+      { id:1, title:"Pico Station", labelLines:["Pico Station"], time:"~2:30 PM", duration:"Start", color:"#6aa7d9", icon:"train", x:130, y:410,
+        desc:"Start near Pico Station and begin the loop toward Downtown LA.",
+        transit:[
+          {mode:"metro", text:"Take the A/E Line toward Downtown LA"},
+          {mode:"metro", text:"Get off at Grand Ave Arts/Bunker Hill"},
+          {mode:"walk", text:"Walk north to Walt Disney Concert Hall (~5 min)"},
+          {mode:"tip", text:"TAP card needed — load fare before boarding"}
+        ],
+        photos:[
+          {shot:"Tap in with TAP card", hint:"At the fare gates before entering platform"},
+          {shot:"Quick station photo", hint:"Platform or station sign with train arriving"},
+          {shot:"Check phone battery", hint:"Charge up — you'll need it for ~5 hours"}
+        ], note:"Leave a few minutes early if you want a buffer." },
+      { id:2, title:"Walt Disney Concert Hall", labelLines:["Walt Disney","Concert Hall"], time:"~2:45 PM", duration:"~35 min", color:"#eb8e98", icon:"building", x:290, y:235,
+        desc:"Iconic architecture and stunning curves. Great light on the stainless steel in the afternoon.",
+        transit:[
+          {mode:"walk", text:"You're already here from Pico — exterior only, no ticket needed"},
+          {mode:"walk", text:"After photos, walk to Civic Center/Grand Park station (~5 min south)"},
+          {mode:"tip", text:"Keep to 30–35 min so the rest of the route isn't rushed"}
+        ],
+        photos:[
+          {shot:"Wide shot from 1st St.", hint:"Stand across the street for the full facade"},
+          {shot:"Curves & reflections detail", hint:"Walk up close to the metallic panels on the south side"},
+          {shot:"Staircase leading up", hint:"Use the outdoor stairs on Grand Ave side"},
+          {shot:"Street view with metro", hint:"Corner of Grand Ave & 1st — city backdrop"}
+        ], note:"Look for soft shadows on the west side." },
+      { id:3, title:"Hollywood Walk of Fame", labelLines:["Hollywood","Walk of Fame"], time:"~3:50 PM", duration:"~50 min", color:"#e7b446", icon:"star", x:530, y:122,
+        desc:"Classic Hollywood stop for the star-lined sidewalk and quick tourist photos.",
+        transit:[
+          {mode:"metro", text:"From Civic Center/Grand Park, take B Line toward North Hollywood"},
+          {mode:"metro", text:"Get off at Hollywood/Highland (~15 min ride)"},
+          {mode:"walk", text:"Exit station — you're on Hollywood Blvd at the heart of Walk of Fame"},
+          {mode:"tip", text:"Do not detour to Hollywood/Vine — stay in the Highland core area"}
+        ],
+        photos:[
+          {shot:"TCL Chinese Theatre entrance", hint:"Face the main entrance from the forecourt"},
+          {shot:"Dolby Theatre exterior", hint:"Just east of TCL — look for the arch and columns"},
+          {shot:"Favorite Walk of Fame stars", hint:"Stay between Highland and Orange Dr for best ones"},
+          {shot:"Hollywood Sign from Ovation", hint:"Go to upper level of Ovation Hollywood, face north"}
+        ], note:"Stay in the Hollywood/Highland core area to save time." },
+      { id:4, title:"In-N-Out", labelLines:["In-N-Out"], time:"~5 PM", duration:"~50 min", color:"#83b46d", icon:"burger", x:650, y:180,
+        desc:"Casual dinner stop in Hollywood before heading to the final LACMA photo stop.",
+        transit:[
+          {mode:"walk", text:"From Hollywood/Highland, walk south toward Sunset Blvd (~12 min)"},
+          {mode:"walk", text:"Destination: 7009 Sunset Blvd"},
+          {mode:"tip", text:"Stay aware of surroundings — Sunset Blvd can be busy"}
+        ],
+        photos:[
+          {shot:"Double-Double", hint:"Natural light by the window — no flash"},
+          {shot:"Animal Style fries", hint:"Overhead flat-lay angle works best"},
+          {shot:"Red-and-yellow storefront", hint:"Step across the street for the full sign"},
+          {shot:"Burger-and-fries table shot", hint:"Arrange on the tray before eating"}
+        ], note:"This location may be busy around dinner time." },
+      { id:5, title:"LACMA Urban Light", labelLines:["LACMA","Urban Light"], time:"~6:30 PM", duration:"~45 min", color:"#61b6c5", icon:"lamp", x:760, y:315,
+        desc:"One of LA's most photogenic exterior stops. No museum entry needed.",
+        transit:[
+          {mode:"walk", text:"Walk back to Hollywood/Highland station (~12 min)"},
+          {mode:"metro", text:"Take B Line toward Union Station"},
+          {mode:"metro", text:"Transfer at Wilshire/Vermont to D Line toward Wilshire/La Cienega"},
+          {mode:"metro", text:"Get off at Wilshire/Fairfax (~25 min total)"},
+          {mode:"walk", text:"Walk south on Fairfax to LACMA entrance (~5 min)"},
+          {mode:"tip", text:"If you want Urban Light after full dark, stay an extra 30–60 min"}
+        ],
+        photos:[
+          {shot:"Centered Urban Light perspective", hint:"Stand at the south end — line up the center row"},
+          {shot:"Side-angle lamp rows", hint:"Walk to the east edge for a diagonal row shot"},
+          {shot:"Portrait between lights", hint:"Step between two lamps, have someone shoot from outside"},
+          {shot:"La Brea Tar Pits exterior", hint:"Quick walk east — mammoth statue by the lake"}
+        ], note:"Urban Light looks better around dusk or after the lamps come on." },
+      { id:6, title:"Return to Pico", labelLines:["Return to","Pico"], time:"~7:15 PM", duration:"~35 min", color:"#a88ac4", icon:"train", x:560, y:410,
+        desc:"Return from Wilshire/Fairfax via D Line, transfer at 7th St/Metro Center, then get off at Pico.",
+        transit:[
+          {mode:"metro", text:"From Wilshire/Fairfax, take D Line toward Union Station"},
+          {mode:"metro", text:"Transfer at 7th St/Metro Center to A/E Line"},
+          {mode:"metro", text:"Get off at Pico (~30 min total)"},
+          {mode:"tip", text:"If tired, rideshare from LACMA to Pico is ~15 min by car"}
+        ],
+        photos:[
+          {shot:"No planned photo stop", hint:"Head back directly"},
+          {shot:"Check next train", hint:"Use Metro app for live departure times"},
+          {shot:"Rideshare if tired", hint:"LACMA to Pico is ~15 min by car"}
+        ], note:"This closes the loop cleanly after LACMA." }
+    ];
+
+    let selected = 0;
+
+    const esc = v => String(v).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+
+    /* ── Build map stops once ── */
+    const mapEl = document.getElementById("mapStops");
+    mapEl.innerHTML = stops.map((s,i) =>
+      `<button class="stop${i===0?" active":""}" type="button" style="left:${s.x}px;top:${s.y}px" data-i="${i}" aria-label="${esc(s.title)}">
+        <span class="stop-icon" style="color:${s.color}">${IC[s.icon]}</span>
+        <span class="num" style="background:${s.color}">${s.id}</span>
+        <span class="stop-copy">${s.labelLines.map(l=>esc(l)).join("<br>")}<span class="stop-time" style="color:${s.color}">${esc(s.time)}</span></span>
+      </button>`
+    ).join("");
+
+    /* ── Build timeline once ── */
+    const tlEl = document.getElementById("timelineRow");
+    tlEl.innerHTML = stops.map((s,i) =>
+      `<button class="card-stop${i===0?" active":""}" type="button" data-i="${i}" aria-label="${esc(s.title)}">
+        <span class="mini-num" style="background:${s.color}">${s.id}</span>
+        <span class="mini-icon" style="color:${s.color}">${IC[s.icon]}</span>
+        <span class="mini-title">${s.labelLines.map(l=>esc(l)).join("<br>")}</span>
+        <span class="mini-time" style="color:${s.color}">${esc(s.time)}</span>
+      </button>`
+    ).join("");
+
+    /* ── Event delegation (one listener each, not N) ── */
+    mapEl.addEventListener("click", e => {
+      const btn = e.target.closest(".stop");
+      if (btn) selectStop(+btn.dataset.i);
+    });
+    tlEl.addEventListener("click", e => {
+      const btn = e.target.closest(".card-stop");
+      if (btn) selectStop(+btn.dataset.i);
+    });
+
+    /* ── Detail refs ── */
+    const dNum = document.getElementById("detailNum");
+    const dIcon = document.getElementById("detailIcon");
+    const dTitle = document.getElementById("detailTitle");
+    const dTime = document.getElementById("detailTime");
+    const dDesc = document.getElementById("detailDesc");
+    const dNote = document.getElementById("detailNote");
+    const dChecklist = document.getElementById("checklist");
+    const dTransit = document.getElementById("transitInfo");
+
+    function selectStop(i) {
+      if (i === selected) return;
+      selected = i;
+      const s = stops[i];
+
+      /* Update detail card only */
+      dNum.textContent = s.id;
+      dNum.style.background = s.color;
+      dIcon.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="${s.color}" stroke-width="1.5" stroke-linecap="round" style="width:48px;height:48px">${IC[s.icon].replace(/<svg[^>]*>|<\/svg>/g,'')}</svg>`;
+      dTitle.textContent = s.title;
+      dTime.innerHTML = `${IC.clock} ${esc(s.time)} (${esc(s.duration)})`;
+      dTime.style.color = s.color;
+      dDesc.textContent = s.desc;
+      dNote.textContent = s.note;
+
+      /* Transit directions */
+      dTransit.innerHTML = s.transit.map(t =>
+        `<div class="transit-step"><span class="transit-mode m-${t.mode}">${IC[t.mode]}</span><span>${esc(t.text)}</span></div>`
+      ).join("");
+
+      /* Photo checklist */
+      dChecklist.innerHTML = s.photos.map((p,j) => `<div class="check" data-j="${j}"><span class="box"></span><span class="check-text"><span class="check-label">${esc(p.shot)}</span><span class="check-hint">${esc(p.hint)}</span></span></div>`).join("");
+
+      /* Toggle active classes (no re-render) */
+      mapEl.querySelectorAll(".stop").forEach((b,j) => b.classList.toggle("active", j===i));
+      tlEl.querySelectorAll(".card-stop").forEach((b,j) => b.classList.toggle("active", j===i));
+    }
+
+    selectStop(0);
+
+    /* ── Checklist toggle ── */
+    dChecklist.addEventListener("click", e => {
+      const item = e.target.closest(".check");
+      if (item) item.classList.toggle("done");
+    });
+  </script>
+</body>
+</html>
